@@ -137,7 +137,6 @@ class DataPartitioner(object):
         return newList
 
 def partition_dataset(rank, size, args):
-    print('==> load train data')
     if args.dataset == 'cifar10':
         transform_train = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
@@ -147,7 +146,7 @@ def partition_dataset(rank, size, args):
         ])
         trainset = torchvision.datasets.CIFAR10(root='../data',
                                                 train=True,
-                                                download=True,
+                                                download=False,
                                                 transform=transform_train)
 
         partition_sizes = [1.0 / size for _ in range(size)]
@@ -158,15 +157,13 @@ def partition_dataset(rank, size, args):
                                                    batch_size=args.batch_size,
                                                    shuffle=True,
                                                    pin_memory=True)
-
-        print('==> load test data')
         transform_test = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
         testset = torchvision.datasets.CIFAR10(root='../data',
                                                train=False,
-                                               download=True,
+                                               download=False,
                                                transform=transform_test)
         test_loader = torch.utils.data.DataLoader(testset,
                                                   batch_size=64,

@@ -3,20 +3,22 @@ import torch
 import argparse
 import torch.multiprocessing as mp
 import torch.distributed as dist
-
+import torch.nn as nn
+import warnings
+warnings.filterwarnings("ignore")
 #custom packages
 from trian_tools import train_one_epoch,eval_one_epoch
 from model import resnet18
 from dataset import partition_dataset
-
+from optimizer_tools import LocalSGD
 def get_args():
     parser = argparse.ArgumentParser(description='PyTorch Cifar10 Training')
     parser.add_argument('--data', default='../data', help='path to dataset')
     parser.add_argument('--checkpoint', default='../checkpoints/best_accuracy.pth', help='path to checkpoint')
-    parser.add_argument('--world_size', default=2, help='total gpu num')
+    parser.add_argument('--world_size', default=4, help='total gpu num')
     parser.add_argument('--epoches', default=1, help='epoch num')
     parser.add_argument('--lr', default=0.01, help='learning rate')
-    parser.add_argument('--tau', default=80, help='how much step to all_reduce')
+    parser.add_argument('--tau', default=10, help='how much step to all_reduce')
     parser.add_argument('--batch_size', default=128, help='batch_size')
     parser.add_argument('--dataset', default='cifar10', help='dataset')
     args = parser.parse_args()
@@ -33,16 +35,29 @@ def train(rank,nprocs,args):
     torch.cuda.manual_seed(2020)
     torch.backends.cudnn.deterministic = True
     # create dataset.
-    train_loader, test_loader = partition_dataset(rank, args.size, args)
-    print(train_loader)
+    train_loader, test_loader = partition_dataset(rank, args.world_size, args)
     # create model.
-
+    model=resnet18()
+    torch.cuda.set_device(rank)
+    model.cuda()
     # define the optimizer.
-
-    # define the lr scheduler.
+    optimizer = LocalSGD(model.parameters(),
+                         lr=args.lr,
+                         gmf=0,
+                         tau=args.tau,
+                         size=args.world_size,
+                         momentum=0.9,
+                         nesterov=True,
+                         weight_decay=1e-4)
+    # define the criterion and lr scheduler.
+    criterion = nn.CrossEntropyLoss()
+    for epoch in range(args.epoches):
+        acc=train_one_epoch(model,optimizer,criterion,train_loader,test_loader,epoch)
+        print(acc)
+        break
 
 def main():
-    args =get_args() #??????
+    args =get_args() #get parameters
     print("The config parameters are-> world_size:%d, epoches:%d, lr:%.2f, tau:%d" % (
     args.world_size, args.epoches, args.lr, args.tau))
     import time
