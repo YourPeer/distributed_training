@@ -86,13 +86,12 @@ class LocalSGD(Optimizer):
         step_flag = (self.itr != 0 and self.itr % self.cp == 0)
         self.itr += 1
         if step_flag:
-            print("parameters average!")
             if self.gmf == 0:
                 # simple average
                 param_list = []
                 for group in self.param_groups:
                     for p in group['params']:
-                        p.data.div_(self.size)
+                        p.data.div_(2)#self.size
                         param_list.append(p)  # .data)
                 communicate(param_list, dist.all_reduce)
 

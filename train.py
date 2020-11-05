@@ -17,9 +17,9 @@ def get_args():
     parser.add_argument('--checkpoint', default='../checkpoints/best_accuracy.pth', help='path to checkpoint')
     parser.add_argument('--world_size', default=4, help='total gpu num')
     parser.add_argument('--epoches', default=1, help='epoch num')
-    parser.add_argument('--lr', default=0.01, help='learning rate')
-    parser.add_argument('--tau', default=10, help='how much step to all_reduce')
-    parser.add_argument('--batch_size', default=128, help='batch_size')
+    parser.add_argument('--lr', default=0.001, help='learning rate')
+    parser.add_argument('--tau', default=50, help='how much step to all_reduce')
+    parser.add_argument('--batch_size', default=64, help='batch_size')
     parser.add_argument('--dataset', default='cifar10', help='dataset')
     args = parser.parse_args()
     return args
@@ -31,8 +31,8 @@ def train(rank,nprocs,args):
                             rank=rank,
                             world_size=args.world_size)
     # seed for reproducibility
-    torch.manual_seed(2020)
-    torch.cuda.manual_seed(2020)
+    torch.manual_seed(1)
+    torch.cuda.manual_seed(1)
     torch.backends.cudnn.deterministic = True
     # create dataset.
     train_loader, test_loader = partition_dataset(rank, args.world_size, args)
@@ -52,7 +52,7 @@ def train(rank,nprocs,args):
     # define the criterion and lr scheduler.
     criterion = nn.CrossEntropyLoss()
     for epoch in range(args.epoches):
-        acc=train_one_epoch(model,optimizer,criterion,train_loader,test_loader,epoch)
+        acc=train_one_epoch(model,optimizer,criterion,train_loader,test_loader,epoch,rank)
         print(acc)
         break
 

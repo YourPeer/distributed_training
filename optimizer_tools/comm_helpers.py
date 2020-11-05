@@ -62,7 +62,12 @@ def communicate(tensors, communication_op, attention=False):
             something like torch.distributed.all_reduce.
     """
     flat_tensor = flatten_tensors(tensors)
-    communication_op(tensor=flat_tensor,async_op=True)
+    import datetime
+    # group1=torch.distributed.new_group(ranks=[0,1])
+    # group2 = torch.distributed.new_group(ranks=[2,3])
+    # torch.distributed.all_reduce(tensor=flat_tensor,group=group1)
+    # torch.distributed.all_reduce(tensor=flat_tensor, group=group2)
+    communication_op(tensor=flat_tensor, async_op=True)
     if attention:
         return tensors/flat_tensor
 
