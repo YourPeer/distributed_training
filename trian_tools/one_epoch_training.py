@@ -1,6 +1,7 @@
 import torch
 def train_one_epoch(model,optimizer,criterion,train_dataloader,test_dataloader,epoch,rank):
     model.train()
+    print('begin train!')
     for batch_idx,(data,target) in enumerate(train_dataloader):
         data=data.cuda(non_blocking=True)
         target=target.cuda(non_blocking=True)
@@ -11,17 +12,17 @@ def train_one_epoch(model,optimizer,criterion,train_dataloader,test_dataloader,e
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
         is_average=optimizer.average()
         if batch_idx%5==0:
-            if  is_average and rank==0:
-                print("average begin------------------------------")
-            torch.cuda.synchronize()
+            # if  is_average and rank==0:
+            #     print("average begin------------------------------")
+
             accuracy=eval_one_epoch(model,test_dataloader)
-            print(accuracy)
-            torch.cuda.synchronize()
-            if  is_average and rank==0:
-                print("average over------------------------------")
+            print('[%d, %5d] loss: %.3f  accuracy:%.3f' %(epoch + 1, batch_idx, loss,accuracy))
+
+            # if  is_average and rank==0:
+            #     print("average over------------------------------")
     return accuracy
 
 def eval_one_epoch(model,test_dataloader):

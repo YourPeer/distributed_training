@@ -171,3 +171,18 @@ def partition_dataset(rank, size, args):
                                                   num_workers=size)
     return train_loader, test_loader
 
+from torchvision.datasets import CIFAR10
+def create_dataloader(data_dir,ngpus_per_node,batch_size):
+    #data transforms
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
+    transform = transforms.Compose([transforms.ToTensor(),normalize])
+    #load dataset
+    trainset=CIFAR10(data_dir, train=True, transform=transform, target_transform=None, download=False)
+    testset = CIFAR10(data_dir, train=False,download=False, transform=transform)
+    #change to dataloader
+    train_sampler= torch.utils.data.distributed.DistributedSampler(trainset)
+    batch_size=int(batch_size/ngpus_per_node)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,shuffle=(train_sampler is None), num_workers=8,sampler=train_sampler)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,shuffle=False, num_workers=8)
+    return trainloader,testloader,train_sampler
+

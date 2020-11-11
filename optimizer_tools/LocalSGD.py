@@ -91,7 +91,7 @@ class LocalSGD(Optimizer):
                 param_list = []
                 for group in self.param_groups:
                     for p in group['params']:
-                        p.data.div_(2)#self.size
+                        p.data.div_(self.size)#
                         param_list.append(p)  # .data)
                 communicate(param_list, dist.all_reduce)
 
